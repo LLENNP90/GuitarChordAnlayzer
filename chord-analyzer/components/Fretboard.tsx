@@ -2,22 +2,36 @@
 
 import { useState } from "react";
 
-const STRINGS = ["e", "B", "G", "D", "A", "E"]; // high to low
+const STRINGS = ["E", "B", "G", "D", "A", "E"]; // high to low
 const FRETS = 15;
 const STRING_SPACING = 40;
 const FRET_SPACING = 60;
 const PADDING = 40;
 
+const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "Bb", "B"];
+const MARKERS = [3,5,7,9,12,15]
+
 export default function Fretboard() {
   const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
-
+  const [clickedString, setClickedString] = useState<number | null>()
   const toggleNotes = (id: string) => {
+    console.log(id)
     setActiveNotes(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     })
+    let stringId: number = parseInt(id.split("-")[0])
+    let fretId: number = parseInt(id.split("-")[1])
+    console.log("String ID: ", stringId);
+    console.log("Fret ID: ", fretId);
+    let clickedString = STRINGS[stringId]
+    console.log(clickedString)
+    let clickedStringIndex = (NOTES.indexOf(clickedString) + fretId) % NOTES.length;
+    console.log(NOTES[clickedStringIndex])
+    // const string = NOTES.indexOf(STRINGS[])
   }
+  //https://www.w3schools.com/graphics/svg_intro.asp
   return (
     <svg
       width={FRET_SPACING * FRETS + PADDING * 2}
@@ -29,7 +43,7 @@ export default function Fretboard() {
       // x1 y1 = pen down, x2 y2 = pen up
         <line 
           key={si}
-          x1={PADDING} x2={PADDING + FRET_SPACING * FRETS} // horizontal
+          x1={20+ PADDING} x2={20 + PADDING + FRET_SPACING * FRETS} // horizontal
           y1={PADDING + si * STRING_SPACING} y2={PADDING + si * STRING_SPACING} // vertical
           stroke="#888" strokeWidth={si + 1} // increase thickness
         />
@@ -39,11 +53,41 @@ export default function Fretboard() {
       {Array.from({length:FRETS+1}).map((_,fi) => ( //fret index
         <line 
           key={fi}
-          x1={PADDING + fi * FRET_SPACING} x2={PADDING + fi * FRET_SPACING}
+          x1={20 + PADDING + fi * FRET_SPACING} x2={20 + PADDING + fi * FRET_SPACING}
           y1={PADDING} y2={PADDING + STRING_SPACING * 5} 
           stroke="#888" strokeWidth={1}
         />
       ))}
+      {/* Put Markers */}
+      {MARKERS.map((m,mi) => (
+        <circle 
+          key={mi}
+          cx={PADDING/2 + 10 +(FRET_SPACING) * m} cy={(PADDING + STRING_SPACING * 5) / 2 + 20} r={10}
+          stroke="gray" strokeWidth={1}
+          fill="gray"
+        />
+      ))}
+      {/* Make it Clickable (nested?) */}
+      {STRINGS.map((_, si) => (
+        Array.from({length: FRETS + 1}).map((_, fi) =>{
+          const id = `${si}-${fi}`;
+          const isActive = activeNotes.has(id);
+          
+          return (
+            <circle 
+              key={id}
+              cx={(fi + 0.5) * FRET_SPACING} cy={PADDING + si * STRING_SPACING} r={14}
+              stroke={isActive ? "#facc15" : "transparent"}
+              fill={isActive ? "#facc15" : "transparent"}
+              onClick={() => toggleNotes(id)}
+              className="cursor-pointer hover:fill-yellow-400/30"
+            />
+          )
+        })
+      ))}
+
+
+
     </svg>
   );
 }
