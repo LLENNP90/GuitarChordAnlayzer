@@ -1,43 +1,57 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme {
-  --color-text: #e2f0f1;
+  /* Colors*/
   --color-background: #0c1719;
+  --color-foreground: #e2f0f1;
+  
+  --color-card: #0f1f22;
+  --color-card-foreground: #e2f0f1;
+  
+  --color-popover: #0f1f22;
+  --color-popover-foreground: #e2f0f1;
+  
   --color-primary: #a4d1d4;
+  --color-primary-foreground: #0c1719;
+  
   --color-secondary: #364873;
+  --color-secondary-foreground: #e2f0f1;
+  
+  --color-muted: #1a2a2e;
+  --color-muted-foreground: #8ba3a6;
+  
   --color-accent: #6174b5;
+  --color-accent-foreground: #e2f0f1;
+  
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #e2f0f1;
+  
+  --color-border: #2a3a3e;
+  --color-input: #1a2a2e;
+  --color-ring: #a4d1d4;
+  
+  --radius-md: 0.625rem; /* Notice: renamed to --radius-md for border-radius utilities */
 
+  /* Font Families */
   --font-heading: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-body: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
+  
   /* Font Sizes */
   --text-sm: 0.75rem;
   --text-base: 1rem;
-  --text-xl: 1.333rem; /* Heading 5 */
-  --text-2xl: 1.777rem; /* Heading 4 */
-  --text-3xl: 2.369rem; /* Heading 3 */
-  --text-4xl: 3.158rem; /* Heading 2 */
-  --text-5xl: 4.21rem; /* Heading 1 */
+  --text-xl: 1.333rem;
+  --text-2xl: 1.777rem;
+  --text-3xl: 2.369rem;
+  --text-4xl: 3.158rem;
+  --text-5xl: 4.21rem;
 
   /* Font Weights */
   --font-weight-normal: 400;
   --font-weight-bold: 700;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
   font-family: var(--font-body);
 }
