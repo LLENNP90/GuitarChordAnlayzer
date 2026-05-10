@@ -68,20 +68,43 @@ export default function Fretboard() {
         />
       ))}
       {/* Make it Clickable (nested?) */}
-      {STRINGS.map((_, si) => (
+      {STRINGS.map((openNote, si) => (
         Array.from({length: FRETS + 1}).map((_, fi) =>{
           const id = `${si}-${fi}`;
           const isActive = activeNotes.has(id);
           
+          const openNoteIndex = NOTES.indexOf(openNote)
+          const noteName: string = NOTES[(openNoteIndex + fi) % NOTES.length] 
+
+          // const cx = 
           return (
-            <circle 
+            <g
               key={id}
-              cx={(fi + 0.5) * FRET_SPACING} cy={PADDING + si * STRING_SPACING} r={14}
-              stroke={isActive ? "#facc15" : "transparent"}
-              fill={isActive ? "#facc15" : "transparent"}
               onClick={() => toggleNotes(id)}
-              className="cursor-pointer hover:fill-yellow-400/30"
-            />
+              className="cursor-pointer group"
+            >
+              <circle 
+                key={id}
+                cx={(fi + 0.5) * FRET_SPACING} cy={PADDING + si * STRING_SPACING} r={14}
+                stroke={isActive ? "#facc15" : "transparent"}
+                fill={isActive ? "#facc15" : "transparent"}
+                
+                className="cursor-pointer hover:fill-yellow-400/30"
+              />
+              {isActive && (
+                <text
+                  x={(fi + 0.5) * FRET_SPACING}
+                  y={PADDING + si * STRING_SPACING}
+                  textAnchor="middle" // justify-center
+                  alignmentBaseline="central" // items-center
+                  fill="#0c1719"
+                  className="font-bold text-xs pointer-events-none select-none font-heading"                 
+                >
+                  {noteName}
+                </text>
+              )}
+            </g>
+
           )
         })
       ))}
