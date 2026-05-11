@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
+import { STRINGS } from "../lib/musicLogic";
 
 interface FretboardProps{
   mode: "chord" | "scale";
+  activeNotes: Set<string>;
+  setActiveNotes: Dispatch<SetStateAction<Set<string>>>
 }
 
-const STRINGS = ["E", "B", "G", "D", "A", "E"]; // high to low
+// const STRINGS = ["E", "B", "G", "D", "A", "E"]; // high to low
 const FRETS = 15;
 const STRING_SPACING = 40;
 const FRET_SPACING = 60;
@@ -17,8 +20,9 @@ const MARKERS = [3,5,7,9,12,15]
 
 export default function Fretboard({
   mode,
+  activeNotes, setActiveNotes
 }: FretboardProps) {
-  const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
+  // const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
   // const [clickedString, setClickedString] = useState<number | null>()
   const toggleNotes = (id: string) => {
     console.log(id)
@@ -41,10 +45,11 @@ export default function Fretboard({
         } 
         next.add(id);
       }
-
-      
       return next;
     })
+
+    const handleCLear = () => {}
+
     let stringId: number = parseInt(id.split("-")[0])
     let fretId: number = parseInt(id.split("-")[1])
     console.log("String ID: ", stringId);

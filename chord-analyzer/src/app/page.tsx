@@ -1,21 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Fretboard from "../../components/Fretboard";
 import ModeToggle from "../../components/ModeToggle";
 import ChordDisplay from "../../components/ChordDisplay";
+import { chordIdentifier, ChordMatch, NOTES, STRINGS, getChordNotes, getChordPositions, getChordVoicings, Voicings } from "../../lib/musicLogic";
 
 // TODO: Make Grid for chord and scale section
 // TODO: Create Chord Identification Logic
 
 export default function Home() {
   const [mode, setMode] = useState<"chord" | "scale">("chord");
+  const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
+  const [chord, setChord] = useState<ChordMatch | null>(null);
+  const [selectedRoot, setSelectedRoot] = useState<string | null>(null)
+  const [selectedChordType, setSelectedChordType] = useState<string | null>(null)
+  const [voicingIndex, setVoicingIndex] = useState<number>(0);
+  const [voicings, setVoicings] = useState<Voicings[]>([])
+
+
+  useEffect(() => {
+    if (selectedRoot && selectedChordType) {
+      const chordNotes = getChordNotes(selectedRoot, selectedChordType)
+      const v = getChordVoicings(chordNotes);
+      console.log(getChordVoicings(chordNotes, 4))
+      setVoicings(v)
+      setVoicingIndex(0)
+      if (v.length > 0) setActiveNotes(new Set(v[0].positions))
+
+      // setActiveNotes(new Set(patterns))
+      
+      // console.log("HELLOW WORLDDD")
+      // console.log(getChordNotes(selectedRoot, selectedChordType)) 
+    }
+  }, [selectedRoot, selectedChordType])
+
+  const getVoicings = (idx: number) => {
+    setVoicingIndex(idx);
+    setActiveNotes(new Set(voicings[idx].positions))
+  }
+
+  const handleResetFilter = () => {
+    setSelectedRoot(null)
+    setSelectedChordType(null)
+    setActiveNotes(new Set())
+    setVoicings([])
+  }
 
   const handleModeChange = (newMode: "chord" | "scale") => {
     setMode(newMode)
-
+    handleResetFilter();
   }
+  
+  const activeNoteNames = Array.from(activeNotes).map(id => {
+    const stringId = parseInt(id.split("-")[0]);
+    const fretId = parseInt(id.split("-")[1]);
 
+    const openNote = STRINGS[stringId];
+    const openNoteIndex = NOTES.indexOf(openNote);
+    return NOTES[(openNoteIndex + fretId) % 12];
+  });
+
+  const uniqueNoteNames = Array.from(new Set(activeNoteNames));
+
+  const matches: ChordMatch[] = uniqueNoteNames.length > 0 ? chordIdentifier(uniqueNoteNames) : []
+
+  // console.log(matches.map(m => {
+  //   m.fullName
+  // }))
   return (
     <div className="bg-background font-sans min-h-screen ">
       {/* Header */}
@@ -56,10 +108,32 @@ export default function Home() {
         <div className="py-5 px-3 border-2 rounded-2xl border-border mb-5">
           <Fretboard 
             mode={mode}
+            activeNotes={activeNotes}
+            setActiveNotes={setActiveNotes}
           />
         </div>
         {/* change tmr, make a section using grid */}
-        <ChordDisplay /> 
+        {/* <ChordDisplay />  */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {mode === "chord" && (
+            <ChordDisplay 
+              matches={matches}
+              uniqueNoteNames={uniqueNoteNames}
+              selectedRoot={selectedRoot}
+              setSelectedRoot={setSelectedRoot}
+              selectedChordType={selectedChordType}
+              setSelectedChordType={setSelectedChordType}
+              voicings={voicings}
+              setVoicings={setVoicings}
+              voicingIndex={voicingIndex}
+              setVoicingIndex={setVoicingIndex}
+              goToVoicing={getVoicings}
+              handleResetFilter={handleResetFilter}
+            />
+          )}
+
+        </section>
+
         {/* <button className="bg-accent text-background px-4 py-2 rounded">
           Analyze Chord
         </button> */}
