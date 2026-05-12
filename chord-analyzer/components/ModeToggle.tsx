@@ -2,8 +2,8 @@
 import React from 'react'
 
 interface ModeToggleProps{
-  mode: "chord" | "scale";
-  onModeChange: (mode: "chord" | "scale") => void;
+  mode: "chord" | "scale" | "progression";
+  onModeChange: (mode: "chord" | "scale" | "progression") => void;
 }
 
 export default function ModeToggle({
@@ -12,7 +12,7 @@ export default function ModeToggle({
 }: ModeToggleProps) {
   return (
     <div>
-      <div className="bg-muted rounded-lg p-1 gap-1 flex max-w-33">
+      <div className="bg-muted rounded-lg p-1 gap-1 flex max-w-59.5">
         <button
           onClick={() => onModeChange("chord")}
           className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
@@ -34,6 +34,17 @@ export default function ModeToggle({
         >
           {/* <Music className="w-4 h-4" /> */}
           Scale
+        </button>
+        <button
+          onClick={() => onModeChange("progression")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+            mode === "progression"
+              ? "bg-primary text-black"
+              : "text-gray-400 hover:text-foreground"
+          }`}
+        >
+          {/* <Music className="w-4 h-4" /> */}
+          Progression
         </button>
       </div>
     </div>

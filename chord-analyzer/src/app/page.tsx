@@ -4,36 +4,74 @@ import { useEffect, useState } from "react";
 import Fretboard from "../../components/Fretboard";
 import ModeToggle from "../../components/ModeToggle";
 import ChordDisplay from "../../components/ChordDisplay";
-import { chordIdentifier, ChordMatch, NOTES, STRINGS, getChordNotes, getChordPositions, getChordVoicings, Voicings } from "../../lib/musicLogic";
-
+import { chordIdentifier, ChordMatch, NOTES, STRINGS, getChordNotes, getChordPositions, getChordVoicings, Voicings, getScaleNotes, getScalePosition } from "../../lib/musicLogic";
+import ScaleDisplay from "../../components/ScaleDisplay";
+import { getMatchingScale, DiatonicChord } from "../../lib/progressionLogic";
+import ProgressionBuilder from "../../components/ProgressionBuilder";
 // TODO: Make Grid for chord and scale section
 // TODO: Create Chord Identification Logic
 
 export default function Home() {
-  const [mode, setMode] = useState<"chord" | "scale">("chord");
+  const [mode, setMode] = useState<"chord" | "scale" | "progression">("chord");
   const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
   const [chord, setChord] = useState<ChordMatch | null>(null);
   const [selectedRoot, setSelectedRoot] = useState<string | null>(null)
   const [selectedChordType, setSelectedChordType] = useState<string | null>(null)
   const [voicingIndex, setVoicingIndex] = useState<number>(0);
   const [voicings, setVoicings] = useState<Voicings[]>([])
-
-
+  const [scaleType, setScaleType] = useState<string | null>(null);
+  // const [scaleNotes, setScaleNotes] = useState<string[]>([])
+  // console.log(scaleType)
   useEffect(() => {
     if (selectedRoot && selectedChordType) {
+      
       const chordNotes = getChordNotes(selectedRoot, selectedChordType)
       const v = getChordVoicings(chordNotes);
       console.log(getChordVoicings(chordNotes, 4))
       setVoicings(v)
       setVoicingIndex(0)
       if (v.length > 0) setActiveNotes(new Set(v[0].positions))
-
+    
+        // setScaleNotes(scaleNotes)
+        
+      
       // setActiveNotes(new Set(patterns))
       
       // console.log("HELLOW WORLDDD")
       // console.log(getChordNotes(selectedRoot, selectedChordType)) 
+      // console.log(getScaleNotes(selectedRoot, "Major"))
     }
   }, [selectedRoot, selectedChordType])
+
+  useEffect(() => {
+    if (scaleType && selectedRoot) {
+      const scaleNotes = getScaleNotes(selectedRoot, scaleType)
+      console.log(scaleNotes)
+      const positions = getScalePosition(scaleNotes)
+      setActiveNotes(new Set(positions))
+      // setScaleNotes(scaleNotes)
+    }
+  }, [scaleType, selectedRoot])
+
+  const [progression, setProgression] = useState<DiatonicChord[]>([])
+  const [activeChordIndex, setActiveChordIndex] = useState<number | null>(null)
+  const [progressionKey, setProgressionKey] = useState<string>("C")
+  const [progressionMode, setProgressionMode] = useState<"Major" | "Minor">("Major")
+
+  // When a chord in the progression is clicked, show its scale on fretboard
+  const handleProgressionChordClick = (chord: DiatonicChord, index: number) => {
+    setActiveChordIndex(index)
+    const scaleName = getMatchingScale(chord.type)
+    const scaleNotes = getScaleNotes(chord.root, scaleName)
+    setActiveNotes(new Set(getScalePosition(scaleNotes)))
+  }
+
+  const handlePlayProgressionChord = (root: string, type: string) => {
+    setSelectedRoot(root);
+    setSelectedChordType(type);
+    // The existing useEffect in page.tsx will automatically catch this change, 
+    // run getChordVoicings, and update the fretboard!
+  }
 
   const getVoicings = (idx: number) => {
     setVoicingIndex(idx);
@@ -45,9 +83,10 @@ export default function Home() {
     setSelectedChordType(null)
     setActiveNotes(new Set())
     setVoicings([])
+    setScaleType(null)
   }
 
-  const handleModeChange = (newMode: "chord" | "scale") => {
+  const handleModeChange = (newMode: "chord" | "scale" | "progression") => {
     setMode(newMode)
     handleResetFilter();
   }
@@ -101,8 +140,10 @@ export default function Home() {
         </div>
         {mode === "chord" ? (
           <h1 className="text-xl font-body mb-3">Click on Fretboard to create Chord</h1>
-        ): (
+        ): mode === "scale" ? (
           <h1 className="text-xl font-body mb-3">Add notes on Fretboard to create Scale</h1>
+        ) : (
+          <h1 className="text-xl font-body mb-3">Create Chord Progressions</h1>
         )}
 
         <div className="py-5 px-3 border-2 rounded-2xl border-border mb-5">
@@ -110,12 +151,13 @@ export default function Home() {
             mode={mode}
             activeNotes={activeNotes}
             setActiveNotes={setActiveNotes}
+            transparent={mode==="scale"}
           />
         </div>
         {/* change tmr, make a section using grid */}
         {/* <ChordDisplay />  */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {mode === "chord" && (
+        <section className={`grid gap-6 ${mode === "progression" ? "grid-cols-1 lg:grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+          {mode === "chord" ? (
             <ChordDisplay 
               matches={matches}
               uniqueNoteNames={uniqueNoteNames}
@@ -130,8 +172,33 @@ export default function Home() {
               goToVoicing={getVoicings}
               handleResetFilter={handleResetFilter}
             />
+          ) : mode === "scale" ? (
+            <ScaleDisplay 
+              scaleType={scaleType}
+              setScaleType={setScaleType}
+              selectedRoot={selectedRoot}
+              setSelectedRoot={setSelectedRoot}
+            />
+          ) : (
+            <ProgressionBuilder 
+              progression={progression}
+              setProgression={setProgression}
+              progressionKey={progressionKey}
+              setProgressionKey={setProgressionKey}
+              progressionMode={progressionMode}
+              setProgressionMode={setProgressionMode}
+            />
+              // <ProgressionBuilder
+              //   progression={progression}
+              //   setProgression={setProgression}
+              //   activeChordIndex={activeChordIndex}
+              //   progressionKey={progressionKey}
+              //   setProgressionKey={setProgressionKey}
+              //   progressionMode={progressionMode}
+              //   setProgressionMode={setProgressionMode}
+              //   onChordClick={handleProgressionChordClick}
+              // />
           )}
-
         </section>
 
         {/* <button className="bg-accent text-background px-4 py-2 rounded">

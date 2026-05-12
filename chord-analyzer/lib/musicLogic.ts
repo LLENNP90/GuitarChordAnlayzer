@@ -31,6 +31,22 @@ export const chordTemplate: Record<string, number[]> = {
   add9: [0, 2, 4, 7]
 }
 
+export const scaleTemplate: Record<string, number[]> = {
+  "Major": [0, 2, 4, 5, 7, 9, 11],
+  "Natural Minor": [0, 2, 3, 5, 7, 8, 10],
+  "Harmonic Minor": [0, 2, 3, 5, 7, 8, 11],
+  "Melodic Minor": [0, 2, 3, 5, 7, 9, 11],
+  "Major Pentatonic": [0, 2, 4, 7, 9],
+  "Minor Pentatonic": [0, 3, 5, 7, 10],
+  "Blues": [0, 3, 5, 6, 7, 10],
+  "Dorian": [0, 2, 3, 5, 7, 9, 10],
+  "Phrygian": [0, 1, 3, 5, 7, 8, 10],
+  "Lydian": [0, 2, 4, 6, 7, 9, 11],
+  "Mixolydian": [0, 2, 4, 5, 7, 9, 10],
+  "Locrian": [0, 1, 3, 5, 6, 8, 10],
+};
+
+
 // get chord based on root & type
 export function getChordNotes(root: string, chordType: string):string[] {
   const rootSemitone = NOTE_TO_SEMITONE[root]
@@ -79,8 +95,8 @@ export function getChordVoicings(chordNotes: string[], maxSpan: number = 4){
       }
     })
     // console.log(notesFound)
-    const hasAllNotes = chordNotes.every(n => notesFound.has(n));
-    const isCompact = positions.length >= 3 && positions.length <= 6;
+    const hasAllNotes = chordNotes.every(n => notesFound.has(n)); //check if note found
+    const isCompact = positions.length >= 3 && positions.length <= 6;  //inside the window
 
     if (hasAllNotes && isCompact) {
       const isDuplicate = voicings.some(v =>
@@ -93,6 +109,33 @@ export function getChordVoicings(chordNotes: string[], maxSpan: number = 4){
   }
 
   return voicings
+}
+
+//get scale notes
+export function getScaleNotes(root: string, scaleName: string) {
+  const pattern = scaleTemplate[scaleName]
+  if (!pattern) return []
+
+  const rootIdx = NOTES.indexOf(root)
+  if (rootIdx === -1) return []
+
+  return pattern.map(interval => NOTES[(rootIdx + interval) % 12])
+}
+
+export function getScalePosition(scaleNotes: string[]){
+  const noteSet = new Set(scaleNotes);
+  const positions: string[] = []
+
+  STRINGS.forEach((openNote, si) => {
+    const openIndex = NOTES.indexOf(openNote);
+    for (let fi = 0; fi < 16; fi++){
+      const noteName = NOTES[(openIndex + fi) % 12]
+      if (noteSet.has(noteName))
+        positions.push(`${si}-${fi}`)
+    }
+  }) 
+
+  return positions
 }
 
 export function chordIdentifier(chord: string[]) {

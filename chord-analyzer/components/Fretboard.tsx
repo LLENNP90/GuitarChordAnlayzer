@@ -4,9 +4,10 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { STRINGS } from "../lib/musicLogic";
 
 interface FretboardProps{
-  mode: "chord" | "scale";
+  mode: "chord" | "scale" | "progression";
   activeNotes: Set<string>;
   setActiveNotes: Dispatch<SetStateAction<Set<string>>>
+  transparent: boolean;
 }
 
 // const STRINGS = ["E", "B", "G", "D", "A", "E"]; // high to low
@@ -20,7 +21,8 @@ const MARKERS = [3,5,7,9,12,15]
 
 export default function Fretboard({
   mode,
-  activeNotes, setActiveNotes
+  activeNotes, setActiveNotes,
+  transparent
 }: FretboardProps) {
   // const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set());
   // const [clickedString, setClickedString] = useState<number | null>()
@@ -48,7 +50,7 @@ export default function Fretboard({
       return next;
     })
 
-    const handleCLear = () => {}
+    // const handleCLear = () => {}
 
     let stringId: number = parseInt(id.split("-")[0])
     let fretId: number = parseInt(id.split("-")[1])
@@ -131,7 +133,7 @@ export default function Fretboard({
             <g
               key={id}
               onClick={() => toggleNotes(id)}
-              className="cursor-pointer group"
+              className={`cursor-pointer group ${transparent && isActive ? "opacity-50" : "opacity-100"}`}
             >
               <circle 
                 key={id}
