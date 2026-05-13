@@ -8,6 +8,11 @@ import { chordIdentifier, ChordMatch, NOTES, STRINGS, getChordNotes, getChordPos
 import ScaleDisplay from "../../components/ScaleDisplay";
 import { getMatchingScale, DiatonicChord } from "../../lib/progressionLogic";
 import ProgressionBuilder from "../../components/ProgressionBuilder";
+import { ProgressionTemplate, getDiatonicChords, buildProgression, PROGRESSION_TEMPLATES } from "../../lib/progressionLogic";
+import build from "next/dist/build";
+import { analyzeWithCohere } from "../../lib/aiAnalysis";
+import AiAnalysis from "../../components/AiAnalysis";
+
 // TODO: Make Grid for chord and scale section
 // TODO: Create Chord Identification Logic
 
@@ -20,6 +25,13 @@ export default function Home() {
   const [voicingIndex, setVoicingIndex] = useState<number>(0);
   const [voicings, setVoicings] = useState<Voicings[]>([])
   const [scaleType, setScaleType] = useState<string | null>(null);
+  //progression 
+  const [progression, setProgression] = useState<DiatonicChord[]>([])
+  const [diatonicChords, setDiatonicChords] = useState<DiatonicChord[]>([])
+  const [activeChordIndex, setActiveChordIndex] = useState<number | null>(null)
+  const [progressionTemp, setProgressionTemp] = useState<ProgressionTemplate | null>(null)
+  const [progressionKey, setProgressionKey] = useState<string>("C")
+  const [progressionMode, setProgressionMode] = useState<"Major" | "Minor">("Major")
   // const [scaleNotes, setScaleNotes] = useState<string[]>([])
   // console.log(scaleType)
   useEffect(() => {
@@ -53,14 +65,48 @@ export default function Home() {
     }
   }, [scaleType, selectedRoot])
 
-  const [progression, setProgression] = useState<DiatonicChord[]>([])
-  const [activeChordIndex, setActiveChordIndex] = useState<number | null>(null)
-  const [progressionKey, setProgressionKey] = useState<string>("C")
-  const [progressionMode, setProgressionMode] = useState<"Major" | "Minor">("Major")
+
+  // const testFunction = async () => {
+  //   const result = await analyzeWithCohere({
+  //     type: "chord",
+  //     chord: "E minor7",
+  //     detectedNotes: ["E", "G", "B", "D"]
+  //   })
+  //   return result
+  // }
+  // console.log(testFunction())
+  // useEffect(() => {
+  //   if (progressionKey && progressionTemp){
+  //   const diatonicChords = getDiatonicChords(progressionKey, progressionMode) 
+  //   setProgression(diatonicChords) // default to diatonic chords of the key
+  //   const newProgression = buildProgression(progressionTemp, progression)
+  //   // console.log("progression temp: ", progressionTemp)
+  //   // console.log("progression: ", progression)
+  //   // console.log(buildProgression(progressionTemp, progression))
+  //   // console.log("diatonic chords: ", diatonicChords)
+  //   console.log("new progression PLSS: ", newProgression)
+  //   }
+  // }, [progressionKey, progressionTemp])
+
 
   // When a chord in the progression is clicked, show its scale on fretboard
-  const handleProgressionChordClick = (chord: DiatonicChord, index: number) => {
+  const handleProgressionChordClick = (chord: DiatonicChord, index: number, previewType: string) => {
     setActiveChordIndex(index)
+
+  if (previewType === "scale") {
+      const scaleName = getMatchingScale(chord.type)
+      const scaleNotes = getScaleNotes(chord.root, scaleName)
+      setActiveNotes(new Set(getScalePosition(scaleNotes)))
+      setVoicings([]) //hide arrows when changing
+    } else {
+      // chord mode with voicings
+      const chordNotes = getChordNotes(chord.root, chord.type)
+      const v = getChordVoicings(chordNotes, 4)
+      setVoicings(v)
+      setVoicingIndex(0)
+      if (v.length > 0) setActiveNotes(new Set(v[0].positions))
+    }
+
     const scaleName = getMatchingScale(chord.type)
     const scaleNotes = getScaleNotes(chord.root, scaleName)
     setActiveNotes(new Set(getScalePosition(scaleNotes)))
@@ -181,12 +227,21 @@ export default function Home() {
             />
           ) : (
             <ProgressionBuilder 
+              diatonicChords={diatonicChords}
+              setDiatonicChords={setDiatonicChords}
               progression={progression}
               setProgression={setProgression}
               progressionKey={progressionKey}
               setProgressionKey={setProgressionKey}
               progressionMode={progressionMode}
               setProgressionMode={setProgressionMode}
+              progressionTemp={progressionTemp}
+              setProgressionTemp={setProgressionTemp}
+              onChordClick={handleProgressionChordClick}
+              activeChordIndex={activeChordIndex}
+              voicings={voicings}
+              voicingIndex={voicingIndex}
+              goToVoicing={getVoicings}
             />
               // <ProgressionBuilder
               //   progression={progression}
@@ -199,6 +254,19 @@ export default function Home() {
               //   onChordClick={handleProgressionChordClick}
               // />
           )}
+          <AiAnalysis 
+            type={mode}
+            matches={matches}
+            keyStr={
+              mode === "progression" 
+                ? `${progressionKey} ${progressionMode}` 
+                : (selectedRoot || undefined)
+            }
+            detectedNotes={uniqueNoteNames}
+            progression={progression}
+            progressionKey={progressionKey}
+            progressionMode={progressionMode}
+          />
         </section>
 
         {/* <button className="bg-accent text-background px-4 py-2 rounded">

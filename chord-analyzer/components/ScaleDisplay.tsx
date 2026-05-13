@@ -5,9 +5,9 @@ import { NOTES, scaleTemplate } from '../lib/musicLogic';
 
 interface ScaleDisplayProps{
   scaleType: string | null
-  setScaleType: React.Dispatch<React.SetStateAction<string | null>>
+  setScaleType: (type: string) => void
   selectedRoot: string | null;
-  setSelectedRoot: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedRoot: (root: string) => void;
 }
 
 export default function ScaleDisplay({
