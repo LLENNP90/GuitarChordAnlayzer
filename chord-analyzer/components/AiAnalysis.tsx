@@ -81,19 +81,19 @@ export default function AiAnalysis({
   return (
     <div className="p-4 bg-card rounded-lg border border-border">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+        <h2 className="text-xl font-heading font-bold text-primary flex items-center gap-2">
           ✨ AI Theory Assistant
         </h2>
         <button
           onClick={handleAnalyze}
           disabled={loading || !isReadyToAnalyze }
-          className="w-50 p-3 bg-primary text-background rounded-lg disabled:opacity-50 cursor-pointer hover:bg-primary/90 transition-colors "
+          className="w-60 p-3 font-body bg-primary text-background rounded-lg disabled:opacity-50 cursor-pointer hover:bg-primary/90 transition-colors "
         >
           {loading ? "Analyzing..." : `✦ Explain This ${type.charAt(0).toUpperCase() + type.slice(1)}`}
         </button>
       </div>
 
-      <div className="p-4 bg-muted rounded border border-border min-h-[100px] text-foreground">
+      <div className="p-4 bg-muted rounded border font-body border-border min-h-[100px] text-foreground">
         {loading ? (
           <p className="text-muted-foreground animate-pulse">Consulting the music theory textbooks...</p>
         ) : analysis ? (

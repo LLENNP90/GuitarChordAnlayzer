@@ -18,6 +18,7 @@ interface ChordDisplayProp{
   setVoicingIndex: Dispatch<SetStateAction<number>>
   goToVoicing: (idx: number) => void
   handleResetFilter: () => void
+  onClickShifter: (direction: string) => void
 }
 
 export default function ChordDisplay({
@@ -27,30 +28,35 @@ export default function ChordDisplay({
   selectedChordType, setSelectedChordType,
   voicings,setVoicings,
   voicingIndex, setVoicingIndex,
-  goToVoicing, handleResetFilter
+  goToVoicing, handleResetFilter, onClickShifter
 }: ChordDisplayProp) {
   return ( 
     // idkif i should make it bg-card or bg-muted
     <div className="mb-4 p-4 bg-card rounded-lg border border-border">
       
-      <h1 className="text-xl font-bold text-primary mb-3">
+      <h1 className="text-xl font-heading font-bold text-primary mb-3">
         {/* join the chord names if more than 1   */}
         Chords: 
       </h1>
-      
+      {/* <div className='flex flex-row '> */}
+        
       {matches.length > 1 ? matches.map((m,mi) => (
         <div key={mi} className='flex flex-wrap mb-2 p-2 bg-muted rounded-lg border border-border'>
-          <p>{m.fullName}</p>
+          <p className='font-bold text-s font-body'>{m.fullName}</p>
         </div>  
       )) : matches.length > 0 ? (
         <div className='flex flex-wrap p-2 mb-2 bg-muted rounded-lg border border-border'>
-          <p>{matches.map(m => m.fullName)}</p>
+          <p className='font-bold text-s font-body'>{matches.map(m => m.fullName)}</p>
         </div>  
       ) : (
         <div className='flex flex-wrap p-2 mb-2 bg-muted rounded-lg border border-border'>
           <p>Can't Find Chord</p>
         </div>  
       )}
+        
+
+      {/* </div> */}
+      
 
       {/* {matches.length > 1 && (
         <div className='flex flex-wrap p-2 bg-muted rounded-lg border border-border'>
@@ -61,14 +67,26 @@ export default function ChordDisplay({
       
       <p className="text-sm text-muted-foreground mb-3">Detected Notes: {uniqueNoteNames.join(", ") || "None"}</p>
       
+      {/* Shifter */}
+      <div className='gap-2 font-body mb-6 p-3 bg-muted rounded-lg border border-border'>
+        <div className="flex justify-between items-center mb-2">
+          <h1 className='text-sm font-bold text-foreground uppercase tracking-wider'>Transpose Shape</h1>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">Slide this exact hand shape up or down the neck to discover new chords.</p>
+        <div className='flex gap-2'>
+          <button className='w-full border border-border hover:bg-primary hover:text-background transition-colors rounded px-4 py-2 font-bold' onClick={() => onClickShifter("down")}>← Shift Down</button>
+          <button className='w-full border border-border hover:bg-primary hover:text-background transition-colors rounded px-4 py-2 font-bold' onClick={() => onClickShifter("up")}>Shift Up →</button>
+        </div>
+      </div>
+
       <div className='flex flex-row justify-between'>
-        <h1 className="text-xl font-bold text-primary mb-3">
+        <h1 className="text-xl font-bold font-heading text-primary mb-3">
           {/* join the chord names if more than 1   */}
           Select Chord 
         </h1>
         <button
           onClick={handleResetFilter}
-          className='px-2 py-1 bg-card border-border border-2 mb-2 rounded-2xl'
+          className='px-2 py-1 bg-card font-body border-border border-2 mb-2 rounded-2xl'
         >
           Reset Filter
         </button>
@@ -79,7 +97,7 @@ export default function ChordDisplay({
         {NOTES.map(note => (
           <button 
             key={note} 
-            className={`p-2 rounded-sm text-center cursor-pointer hover:bg-primary transition-colors
+            className={`p-2 rounded-sm font-body text-center cursor-pointer hover:bg-primary transition-colors
                 ${selectedRoot === note 
                   ? "bg-primary text-background border-primary"
                   : "bg-muted border-border hover:border-primary"
@@ -95,7 +113,7 @@ export default function ChordDisplay({
         {Object.keys(chordTemplate).map(chord => (
           <button 
             key={chord} 
-            className={`p-2 rounded-sm text-center cursor-pointer hover:bg-primary transition-colors 
+            className={`p-2 rounded-sm font-body text-center cursor-pointer hover:bg-primary transition-colors 
                 ${selectedChordType === chord 
                   ? "bg-primary text-background border-primary"
                   : "bg-muted border-border hover:border-primary"

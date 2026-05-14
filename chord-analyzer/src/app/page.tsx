@@ -66,6 +66,29 @@ export default function Home() {
     }
   }, [scaleType, selectedRoot])
 
+  const shiftChordShape = (
+    activeNotes: Set<string>,
+    semitones: number
+  ): Set<string> => {
+    const shifted = new Set<string>();
+    for (const note of activeNotes) {
+      const [stringId, fretId] = note.split("-").map(Number);
+      const newFretId = fretId + semitones;
+      
+      if (newFretId < 0 || newFretId > 15) {
+        return activeNotes; // returns original shape
+      }
+
+      shifted.add(`${stringId}-${newFretId}`);
+    }
+    return shifted;
+  }
+
+  const onClickShifter = (direction: string) => {
+    const semitones = direction === "up" ? 1 : -1;
+    const shiftedNotes = shiftChordShape(activeNotes, semitones);
+    setActiveNotes(shiftedNotes);
+  }
 
   // const testFunction = async () => {
   //   const result = await analyzeWithCohere({
@@ -219,6 +242,7 @@ export default function Home() {
               setVoicingIndex={setVoicingIndex}
               goToVoicing={getVoicings}
               handleResetFilter={handleResetFilter}
+              onClickShifter={onClickShifter}
             />
           ) : mode === "scale" ? (
             <ScaleDisplay 
