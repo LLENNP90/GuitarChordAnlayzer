@@ -1,21 +1,26 @@
-const { PrismaClient } = require('@prisma/client');
+import express, { type Request, type Response } from "express";
+import cors from "cors";
+import dotenv from "dotenv";
 
-const prisma = new PrismaClient();
+dotenv.config();
 
-async function main() {
-  //change to reference a table in your schema
-  const val = await prisma.User.findMany({
-    take: 10,
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.get("/", (_req, res) => {
+  res.json({ message: "Backend running" });
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.get("/health", (_req: Request, res: Response) => {
+  res.json({
+    status: "WORKING!",
   });
-  console.log(val);
-}
+});
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-  process.exit(1);
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
