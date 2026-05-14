@@ -12,11 +12,37 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SavedType {
+  chord
+  scale
+  progression
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  username String   @unique
-  email String  @unique
-  name  String?
+  id            String      @id @default(uuid()) @db.Uuid
+  username      String      @unique
+  email         String      @unique
+  passwordHash  String
+  name          String?
+  createdAt     DateTime    @default(now())
+
+ 
+  saved         Saved[]
+}
+
+model Saved {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @db.Uuid
+  user          User        @relation(fields: [userId], references: [id])
+
+ savedType     SavedType
+
+  name          String    // can be chord/scale/progression
+  key           String?    // for prog and chord
+  mode          String?    // for prog and chord
+  notes         String[]
+  chord         String[]   @default([])
+  createdAt     DateTime    @default(now())
 }
 
 
