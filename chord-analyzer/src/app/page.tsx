@@ -32,6 +32,7 @@ export default function Home() {
   const [progressionTemp, setProgressionTemp] = useState<ProgressionTemplate | null>(null)
   const [progressionKey, setProgressionKey] = useState<string>("C")
   const [progressionMode, setProgressionMode] = useState<"Major" | "Minor">("Major")
+  const [analysis, setAnalysis] = useState<string>("");
   // const [scaleNotes, setScaleNotes] = useState<string[]>([])
   // console.log(scaleType)
   useEffect(() => {
@@ -135,6 +136,7 @@ export default function Home() {
   const handleModeChange = (newMode: "chord" | "scale" | "progression") => {
     setMode(newMode)
     handleResetFilter();
+    setAnalysis("");
   }
   
   const activeNoteNames = Array.from(activeNotes).map(id => {
@@ -145,7 +147,7 @@ export default function Home() {
     const openNoteIndex = NOTES.indexOf(openNote);
     return NOTES[(openNoteIndex + fretId) % 12];
   });
-
+  console.log(mode)
   const uniqueNoteNames = Array.from(new Set(activeNoteNames));
 
   const matches: ChordMatch[] = uniqueNoteNames.length > 0 ? chordIdentifier(uniqueNoteNames) : []
@@ -266,6 +268,9 @@ export default function Home() {
             progression={progression}
             progressionKey={progressionKey}
             progressionMode={progressionMode}
+            analysis={analysis}
+            setAnalysis={setAnalysis}
+            scaleType={scaleType}
           />
         </section>
 
