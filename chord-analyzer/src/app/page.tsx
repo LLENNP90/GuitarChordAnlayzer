@@ -27,6 +27,7 @@ export type SavedItem = {
   mode?: string | null;
   notes: string[];
   chord: string[];
+  voicingIndex?: number | null;
   createdAt: string;
 };
 
@@ -51,6 +52,7 @@ export default function Home() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveLoading, setSaveLoading] = useState<boolean>(false);
   const [selectedSaved, setSelectedSaved] = useState<SavedItem | null>(null);
+  const [progressionName, setProgressionName] = useState("");
   // const [scaleNotes, setScaleNotes] = useState<string[]>([])
   // console.log(scaleType)
   useEffect(() => {
@@ -58,10 +60,12 @@ export default function Home() {
       
       const chordNotes = getChordNotes(selectedRoot, selectedChordType)
       const v = getChordVoicings(chordNotes);
-      console.log(getChordVoicings(chordNotes, 4))
+      const safeIndex = Math.min(voicingIndex, Math.max(v.length - 1, 0));
+
+      // console.log(getChordVoicings(chordNotes, 4))
       setVoicings(v)
-      setVoicingIndex(0)
-      if (v.length > 0) setActiveNotes(new Set(v[0].positions))
+      // setVoicingIndex(0)
+      if (v.length > 0) setActiveNotes(new Set(v[safeIndex].positions))
       // console.log("HELLOW WORLDDD")
       // console.log(getChordNotes(selectedRoot, selectedChordType)) 
       // console.log(getScaleNotes(selectedRoot, "Major"))
@@ -145,6 +149,7 @@ export default function Home() {
           mode: selectedChordType || firstMatch.type,
           notes: uniqueNoteNames,
           chord: [firstMatch.fullName],
+          voicingIndex: voicingIndex
         });
       } else if(type === "scale") {
         if (!selectedRoot || !scaleType) {
@@ -167,9 +172,9 @@ export default function Home() {
           setSaveLoading(false);
           return;
         }
-
+        console.log("Saving progression:", progression)
         await api.createSaved("progression", {
-          name: `${progressionKey} ${progressionMode} progression`,
+          name: progressionTemp?.name as string || `${progressionKey} ${progressionMode} Progression - ${new Date().toLocaleString()}`,
           key: progressionKey,
           mode: progressionMode,
           notes: [],
@@ -192,19 +197,26 @@ const handleSelectSaved = (item: SavedItem) => {
   if (item.savedType === "chord") {
     const [root, chordType] = item.chord[0].split(" ");
     console.log(item)
+    console.log(item.voicingIndex)
     console.log(root, chordType)
     setSelectedRoot(root);
     setSelectedChordType(chordType);
     setScaleType(null);
     setVoicings([]);
 
+    
+
     if (root && chordType) {
       console.log(root, chordType)
       const chordNotes = getChordNotes(root, chordType)
       const v = getChordVoicings(chordNotes);
-      setVoicings(v)
-      setVoicingIndex(0)
-      if (v.length > 0) setActiveNotes(new Set(v[0].positions))
+      const savedIndex = item.voicingIndex ?? 0;
+      if (item.voicingIndex !== null){
+        setVoicings(v)
+        setVoicingIndex(savedIndex)
+        if (v.length > 0) setActiveNotes(new Set(v[savedIndex].positions))
+      }
+      
     }
 
     return
@@ -229,21 +241,33 @@ const handleSelectSaved = (item: SavedItem) => {
 
   if (item.savedType === "progression") {
     console.log(item)
-    setProgressionKey(item.key ?? "C",);
-    setProgressionMode(item.mode === "Minor" ? "Minor" : "Major");
+    const key = item.key ?? "C";
+    const mode = item.mode === "Minor" ? "Minor" : "Major";
+    setProgressionKey(key);
+    setProgressionMode(mode);
     setProgressionTemp(null);
     setVoicings([]);
 
+    const diatonic = getDiatonicChords(key, mode)
+
     const savedProgression = item.chord.map((label, idx) => {
       const [root, ...type] = label.split(" ");
+      const chordType = type.join(" ") || "major";
 
-      return {
-        root,
-        type: type.join(" ") || "major",
-        roman: `${idx + 1}`
-      }
+      const matched = diatonic.find((chord) => chord.root === root && chord.type === chordType)
+      console.log(matched)
+      return (
+        matched ?? {
+          root,
+          type: chordType,
+          fullName: `${root} ${chordType}`,
+          roman: "?",
+          degree: -1,
+        }
+      );
     })
-    setProgression(savedProgression as DiatonicChord[]);
+    setDiatonicChords(diatonic);
+    setProgression(savedProgression);
   }
 }
 

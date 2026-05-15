@@ -113,6 +113,8 @@ function DragGhostCard({ chord }: { chord: DiatonicChord }) {
 function ProgressionDropZone({ children, isEmpty }: { children: React.ReactNode; isEmpty: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: "progression-drop-zone" })
 
+  console.log("HERE")
+
   return (
     <div
       ref={setNodeRef}
@@ -173,8 +175,6 @@ export default function ProgressionBuilder({
       const newProgression = buildProgression(progressionTemp, chords)
       setProgression(newProgression)
       console.log("new Prog",newProgression)
-    } else{
-      setProgression([])
     }
   }, [progressionKey, progressionMode, progressionTemp])
 

@@ -1,5 +1,6 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import { SavedItem } from '@/app/page';
+import { getDiatonicChords } from '../lib/progressionLogic';
 
 
 
@@ -12,6 +13,29 @@ interface SavedPanelProp{
     loading?: boolean
     error?: string| null
     selectedSaved?: SavedItem | null
+}
+
+//helper function
+function getRomanProgression(item: SavedItem) {
+  if (!item.key || !item.mode || item.chord.length === 0) {
+    return "";
+  }
+
+  const mode = item.mode === "Minor" ? "Minor" : "Major";
+  const diatonic = getDiatonicChords(item.key, mode);
+
+  return item.chord
+    .map((label) => {
+      const [root, ...typeParts] = label.split(" ");
+      const chordType = typeParts.join(" ") || "major";
+
+      const matched = diatonic.find(
+        (chord) => chord.root === root && chord.type === chordType
+      );
+
+      return matched?.roman ?? "?";
+    })
+    .join(" - ");
 }
 
 export default function SavedPanel({
@@ -67,6 +91,11 @@ export default function SavedPanel({
               {item.notes.length > 0 && (
                 <p className="text-xs text-muted-foreground">
                   Notes: {item.notes.join(", ")}
+                </p>
+              )}
+              {type === "progression" && (
+                <p className="text-xs text-muted-foreground">
+                  {getRomanProgression(item)}
                 </p>
               )}
 

@@ -40,6 +40,7 @@ async function main() {
         mode: "minor",
         notes: ["E", "G", "B", "D"],
         chord: [],
+        voicingIndex: 3
       },
       {
         userId: user.id,
@@ -49,6 +50,7 @@ async function main() {
         mode: "major",
         notes: ["C", "E", "G", "B"],
         chord: [],
+        voicingIndex: 0
       },
       {
         userId: user.id,

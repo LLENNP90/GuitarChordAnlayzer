@@ -75,7 +75,7 @@ router.post(
 
             if (typeof type !== "string" || !isSavedType(type)) throw ErrorResponses.INVALID_FORMAT
 
-            const { name, key, mode, notes, chord } = req.body;
+            const { name, key, mode, notes, chord, voicingIndex } = req.body;
 
             if (!name) throw ErrorResponses.MISSING_FIELDS
 
@@ -86,7 +86,8 @@ router.post(
                 key,
                 mode,
                 notes,
-                chord
+                chord,
+                voicingIndex
             });
 
             Success(res, { saved });

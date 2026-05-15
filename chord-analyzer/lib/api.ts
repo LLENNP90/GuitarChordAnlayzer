@@ -61,6 +61,7 @@ export const api = {
         mode?: string,
         notes?: string[],
         chord?: string[]
+        voicingIndex?: number
     }) {
         return apiFetch(`api/saved/${type}`, {
             method: "POST",

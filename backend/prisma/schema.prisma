@@ -42,6 +42,7 @@ model Saved {
   mode          String?    // for prog and chord
   notes         String[]
   chord         String[]   @default([])
+  voicingIndex  Int?
   createdAt     DateTime    @default(now())
 }
 

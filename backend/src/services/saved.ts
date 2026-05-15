@@ -18,7 +18,7 @@ interface AddSaveInput{
     notes?: string[]
     chord?: string[]
     savedType: SavedType
-    
+    voicingIndex?: number | null
 }
 
 export class SavedTheory{
@@ -56,7 +56,8 @@ export class SavedTheory{
                 mode: input.mode,
                 notes: input.notes ?? [],
                 chord: input.chord ?? [],
-                savedType: input.savedType
+                savedType: input.savedType,
+                voicingIndex: input.voicingIndex ?? null
             },
         })
     }
