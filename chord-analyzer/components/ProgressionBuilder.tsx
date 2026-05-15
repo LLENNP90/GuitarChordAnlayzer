@@ -168,9 +168,11 @@ export default function ProgressionBuilder({
   useEffect(() => {
     const chords = getDiatonicChords(progressionKey, progressionMode)
     setDiatonicChords(chords)
+    console.log("diatonicChordS: ",diatonicChords)
     if (progressionTemp){
       const newProgression = buildProgression(progressionTemp, chords)
       setProgression(newProgression)
+      console.log("new Prog",newProgression)
     } else{
       setProgression([])
     }

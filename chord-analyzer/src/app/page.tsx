@@ -12,9 +12,23 @@ import { ProgressionTemplate, getDiatonicChords, buildProgression, PROGRESSION_T
 import build from "next/dist/build";
 import { analyzeWithCohere } from "../../lib/aiAnalysis";
 import AiAnalysis from "../../components/AiAnalysis";
+import { api } from "../../lib/api";
+import { getAuthToken } from "../../lib/auth";
+import SavedPanel from "../../components/SavedPanel";
 
 // TODO: Make Grid for chord and scale section
 // TODO: Create Chord Identification Logic
+
+export type SavedItem = {
+  id: string;
+  savedType: "chord" | "scale" | "progression";
+  name: string;
+  key?: string | null;
+  mode?: string | null;
+  notes: string[];
+  chord: string[];
+  createdAt: string;
+};
 
 export default function Home() {
   const [mode, setMode] = useState<"chord" | "scale" | "progression">("chord");
@@ -33,6 +47,10 @@ export default function Home() {
   const [progressionKey, setProgressionKey] = useState<string>("C")
   const [progressionMode, setProgressionMode] = useState<"Major" | "Minor">("Major")
   const [analysis, setAnalysis] = useState<string>("");
+  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveLoading, setSaveLoading] = useState<boolean>(false);
+  const [selectedSaved, setSelectedSaved] = useState<SavedItem | null>(null);
   // const [scaleNotes, setScaleNotes] = useState<string[]>([])
   // console.log(scaleType)
   useEffect(() => {
@@ -44,12 +62,6 @@ export default function Home() {
       setVoicings(v)
       setVoicingIndex(0)
       if (v.length > 0) setActiveNotes(new Set(v[0].positions))
-    
-        // setScaleNotes(scaleNotes)
-        
-      
-      // setActiveNotes(new Set(patterns))
-      
       // console.log("HELLOW WORLDDD")
       // console.log(getChordNotes(selectedRoot, selectedChordType)) 
       // console.log(getScaleNotes(selectedRoot, "Major"))
@@ -90,28 +102,150 @@ export default function Home() {
     setActiveNotes(shiftedNotes);
   }
 
-  // const testFunction = async () => {
-  //   const result = await analyzeWithCohere({
-  //     type: "chord",
-  //     chord: "E minor7",
-  //     detectedNotes: ["E", "G", "B", "D"]
-  //   })
-  //   return result
-  // }
-  // console.log(testFunction())
-  // useEffect(() => {
-  //   if (progressionKey && progressionTemp){
-  //   const diatonicChords = getDiatonicChords(progressionKey, progressionMode) 
-  //   setProgression(diatonicChords) // default to diatonic chords of the key
-  //   const newProgression = buildProgression(progressionTemp, progression)
-  //   // console.log("progression temp: ", progressionTemp)
-  //   // console.log("progression: ", progression)
-  //   // console.log(buildProgression(progressionTemp, progression))
-  //   // console.log("diatonic chords: ", diatonicChords)
-  //   console.log("new progression PLSS: ", newProgression)
-  //   }
-  // }, [progressionKey, progressionTemp])
+  const loadSavedItems = async (type: "chord" | "scale" | "progression") => {
+    try{
+      const token = getAuthToken();
+      if (!token) return
 
+      const data = await api.getSaved(type)
+      setSavedItems(data.saved);
+    } catch (error) {
+      console.error("Error loading saved items:", error);
+      setSaveError("Failed to load saved items.");
+    }
+  } 
+
+  useEffect(() => {
+    loadSavedItems(mode);
+  }, [mode]);
+
+  const handleSaveItems = async (type: "chord" | "scale" | "progression") => {
+    try{
+      setSaveError(null);
+      setSaveLoading(true);
+
+      if (!getAuthToken()) {
+        setSaveError("You must be logged in to save items.");
+        setSaveLoading(false);
+        return;
+      }
+
+      
+      if (type === "chord") {
+        const firstMatch = matches[0];
+        if (!firstMatch) {
+          setSaveError("No chord detected to save.");
+          setSaveLoading(false);
+          return;
+        }
+
+        await api.createSaved("chord", {
+          name: `${firstMatch.fullName} - ${new Date().toLocaleString()}`,
+          key: selectedRoot || firstMatch.root,
+          mode: selectedChordType || firstMatch.type,
+          notes: uniqueNoteNames,
+          chord: [firstMatch.fullName],
+        });
+      } else if(type === "scale") {
+        if (!selectedRoot || !scaleType) {
+          setSaveError("No scale detected to save.");
+          setSaveLoading(false);
+          return;
+        } 
+
+        await api.createSaved("scale", {
+          name: `${selectedRoot} ${scaleType}`,
+          key: selectedRoot,
+          mode: scaleType,
+          notes: getScaleNotes(selectedRoot, scaleType),
+          chord: [],
+        });
+
+      } else if (type === "progression") {
+        if (progression.length === 0) {
+          setSaveError("No progression detected to save.");
+          setSaveLoading(false);
+          return;
+        }
+
+        await api.createSaved("progression", {
+          name: `${progressionKey} ${progressionMode} progression`,
+          key: progressionKey,
+          mode: progressionMode,
+          notes: [],
+          chord: progression.map(chord => `${chord.root} ${chord.type}`)
+        })
+      }
+
+      await loadSavedItems(type);
+    }  catch (error) {
+      console.error("Error saving item:", error);
+      setSaveError("Failed to save item.");
+    } finally {
+      setSaveLoading(false)
+    }
+  }
+
+const handleSelectSaved = (item: SavedItem) => {
+  setSelectedSaved(item);
+
+  if (item.savedType === "chord") {
+    const [root, chordType] = item.chord[0].split(" ");
+    console.log(item)
+    console.log(root, chordType)
+    setSelectedRoot(root);
+    setSelectedChordType(chordType);
+    setScaleType(null);
+    setVoicings([]);
+
+    if (root && chordType) {
+      console.log(root, chordType)
+      const chordNotes = getChordNotes(root, chordType)
+      const v = getChordVoicings(chordNotes);
+      setVoicings(v)
+      setVoicingIndex(0)
+      if (v.length > 0) setActiveNotes(new Set(v[0].positions))
+    }
+
+    return
+  }
+
+  if (item.savedType === "scale") {
+    const root = item.key || item.notes[0];
+    const scaleType = item.mode || null;
+
+    setSelectedRoot(root);
+    setScaleType(scaleType);
+    setSelectedChordType(null);
+    setVoicings([]);
+    
+    if (root && scaleType) {
+      const scaleNotes = getScaleNotes(root, scaleType)
+      setActiveNotes(new Set(getScalePosition(scaleNotes)))
+    }
+
+    return
+  }
+
+  if (item.savedType === "progression") {
+    console.log(item)
+    setProgressionKey(item.key ?? "C",);
+    setProgressionMode(item.mode === "Minor" ? "Minor" : "Major");
+    setProgressionTemp(null);
+    setVoicings([]);
+
+    const savedProgression = item.chord.map((label, idx) => {
+      const [root, ...type] = label.split(" ");
+
+      return {
+        root,
+        type: type.join(" ") || "major",
+        roman: `${idx + 1}`
+      }
+    })
+    setProgression(savedProgression as DiatonicChord[]);
+  }
+}
 
   // When a chord in the progression is clicked, show its scale on fretboard
   const handleProgressionChordClick = (chord: DiatonicChord, index: number, previewType: string) => {
@@ -170,7 +304,7 @@ export default function Home() {
     const openNoteIndex = NOTES.indexOf(openNote);
     return NOTES[(openNoteIndex + fretId) % 12];
   });
-  console.log(mode)
+  // console.log(mode)
   const uniqueNoteNames = Array.from(new Set(activeNoteNames));
 
   const matches: ChordMatch[] = uniqueNoteNames.length > 0 ? chordIdentifier(uniqueNoteNames) : []
@@ -227,76 +361,93 @@ export default function Home() {
         </div>
         {/* change tmr, make a section using grid */}
         {/* <ChordDisplay />  */}
-        <section className={`grid gap-6 ${mode === "progression" ? "grid-cols-1 lg:grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
-          {mode === "chord" ? (
-            <ChordDisplay 
+        <section
+          className={`grid gap-6 ${
+            mode === "progression"
+              ? "grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+              : "grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+          }`}
+        >
+          <div>
+            {mode === "chord" ? (
+              <ChordDisplay 
+                matches={matches}
+                uniqueNoteNames={uniqueNoteNames}
+                selectedRoot={selectedRoot}
+                setSelectedRoot={setSelectedRoot}
+                selectedChordType={selectedChordType}
+                setSelectedChordType={setSelectedChordType}
+                voicings={voicings}
+                setVoicings={setVoicings}
+                voicingIndex={voicingIndex}
+                setVoicingIndex={setVoicingIndex}
+                goToVoicing={getVoicings}
+                handleResetFilter={handleResetFilter}
+                onClickShifter={onClickShifter}
+              />
+            ) : mode === "scale" ? (
+              <ScaleDisplay 
+                scaleType={scaleType}
+                setScaleType={setScaleType}
+                selectedRoot={selectedRoot}
+                setSelectedRoot={setSelectedRoot}
+              />
+            ) : (
+              <ProgressionBuilder 
+                diatonicChords={diatonicChords}
+                setDiatonicChords={setDiatonicChords}
+                progression={progression}
+                setProgression={setProgression}
+                progressionKey={progressionKey}
+                setProgressionKey={setProgressionKey}
+                progressionMode={progressionMode}
+                setProgressionMode={setProgressionMode}
+                progressionTemp={progressionTemp}
+                setProgressionTemp={setProgressionTemp}
+                onChordClick={handleProgressionChordClick}
+                activeChordIndex={activeChordIndex}
+                voicings={voicings}
+                voicingIndex={voicingIndex}
+                goToVoicing={getVoicings}
+              />
+            )}
+
+            <AiAnalysis 
+              type={mode}
               matches={matches}
-              uniqueNoteNames={uniqueNoteNames}
-              selectedRoot={selectedRoot}
-              setSelectedRoot={setSelectedRoot}
-              selectedChordType={selectedChordType}
-              setSelectedChordType={setSelectedChordType}
-              voicings={voicings}
-              setVoicings={setVoicings}
-              voicingIndex={voicingIndex}
-              setVoicingIndex={setVoicingIndex}
-              goToVoicing={getVoicings}
-              handleResetFilter={handleResetFilter}
-              onClickShifter={onClickShifter}
-            />
-          ) : mode === "scale" ? (
-            <ScaleDisplay 
-              scaleType={scaleType}
-              setScaleType={setScaleType}
-              selectedRoot={selectedRoot}
-              setSelectedRoot={setSelectedRoot}
-            />
-          ) : (
-            <ProgressionBuilder 
-              diatonicChords={diatonicChords}
-              setDiatonicChords={setDiatonicChords}
+              keyStr={
+                mode === "progression" 
+                  ? `${progressionKey} ${progressionMode}` 
+                  : (selectedRoot || undefined)
+              }
+              detectedNotes={uniqueNoteNames}
               progression={progression}
-              setProgression={setProgression}
               progressionKey={progressionKey}
-              setProgressionKey={setProgressionKey}
               progressionMode={progressionMode}
-              setProgressionMode={setProgressionMode}
-              progressionTemp={progressionTemp}
-              setProgressionTemp={setProgressionTemp}
-              onChordClick={handleProgressionChordClick}
-              activeChordIndex={activeChordIndex}
-              voicings={voicings}
-              voicingIndex={voicingIndex}
-              goToVoicing={getVoicings}
+              analysis={analysis}
+              setAnalysis={setAnalysis}
+              scaleType={scaleType}
             />
-              // <ProgressionBuilder
-              //   progression={progression}
-              //   setProgression={setProgression}
-              //   activeChordIndex={activeChordIndex}
-              //   progressionKey={progressionKey}
-              //   setProgressionKey={setProgressionKey}
-              //   progressionMode={progressionMode}
-              //   setProgressionMode={setProgressionMode}
-              //   onChordClick={handleProgressionChordClick}
-              // />
-          )}
-          <AiAnalysis 
+          </div>
+
+          <SavedPanel
             type={mode}
-            matches={matches}
-            keyStr={
-              mode === "progression" 
-                ? `${progressionKey} ${progressionMode}` 
-                : (selectedRoot || undefined)
+            title={
+              mode === "chord"
+                ? "Saved Chords"
+                : mode === "scale"
+                ? "Saved Scales"
+                : "Saved Progressions"
             }
-            detectedNotes={uniqueNoteNames}
-            progression={progression}
-            progressionKey={progressionKey}
-            progressionMode={progressionMode}
-            analysis={analysis}
-            setAnalysis={setAnalysis}
-            scaleType={scaleType}
+            items={savedItems}
+            onSave={() => handleSaveItems(mode)}
+            onSelect={handleSelectSaved}
+            loading={saveLoading}
+            error={saveError}
+            selectedSaved={selectedSaved}
           />
         </section>
+        
 
         {/* <button className="bg-accent text-background px-4 py-2 rounded">
           Analyze Chord

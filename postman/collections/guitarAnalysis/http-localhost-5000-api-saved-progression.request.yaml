@@ -1,0 +1,10 @@
+$kind: http-request
+name: http://localhost:5000/api/saved/progression
+url: http://localhost:5000/api/saved/progression
+method: GET
+headers:
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZjNmIxYzBhLWIwNTQtNDhmNi1hZjNmLWQ5NzkwM2YwZTc4YiIsInVzZXJuYW1lIjoiZGVtb19wbGF5ZXIiLCJpYXQiOjE3Nzg3ODA4MjQsImV4cCI6MTc3OTM4NTYyNH0.60zegPu_Tt-pmb_JnqHaWDGCOh9cDBQA9vjG1Th9ECA
+body:
+  type: json
+  content: ""
+order: 1778781690038

@@ -52,7 +52,7 @@ export class SavedTheory{
             data: {
                 userId: input.userId,
                 name: input.name,
-                key: input.name,
+                key: input.key,
                 mode: input.mode,
                 notes: input.notes ?? [],
                 chord: input.chord ?? [],
