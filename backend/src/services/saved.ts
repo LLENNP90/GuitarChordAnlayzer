@@ -61,4 +61,47 @@ export class SavedTheory{
             },
         })
     }
+    static async deleteSaved(input:{
+        id: string,
+        userId: string,
+        savedType: SavedType;
+    }){
+        const saved = await prisma.saved.findFirst({
+            where:{
+                id: input.id,
+                userId: input.userId,
+                savedType: input.savedType,
+            },
+        });
+
+        if (!saved) throw ErrorResponses.SAVED_NOT_FOUND
+
+        await prisma.saved.delete({
+            where: {id:saved.id}
+        })
+
+        return saved;
+    }
+
+    static async updateSavedName(input: {
+        id: string,
+        userId: string,
+        savedType: SavedType,
+        newSaveName: string
+    }){
+        const saved = await prisma.saved.findFirst({
+            where:{
+                id: input.id,
+                userId: input.userId,
+                savedType: input.savedType,
+            },
+        });
+
+        if (!saved) throw ErrorResponses.SAVED_NOT_FOUND
+
+        await prisma.saved.update({
+            where: {id: saved.id},
+            data: {name: input.newSaveName}
+        })
+    }
 }

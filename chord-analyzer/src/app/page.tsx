@@ -13,8 +13,10 @@ import build from "next/dist/build";
 import { analyzeWithCohere } from "../../lib/aiAnalysis";
 import AiAnalysis from "../../components/AiAnalysis";
 import { api } from "../../lib/api";
-import { getAuthToken } from "../../lib/auth";
+import { getAuthToken, removeAuthToken } from "../../lib/auth";
 import SavedPanel from "../../components/SavedPanel";
+import { Guitar } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // TODO: Make Grid for chord and scale section
 // TODO: Create Chord Identification Logic
@@ -53,8 +55,49 @@ export default function Home() {
   const [saveLoading, setSaveLoading] = useState<boolean>(false);
   const [selectedSaved, setSelectedSaved] = useState<SavedItem | null>(null);
   const [progressionName, setProgressionName] = useState("");
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    username: string;
+    email: string;
+    name?: string | null;
+  } | null>(null);
+
+  const [authMenuOpen, setAuthMenuOpen] = useState(false);
+
+
+  const router = useRouter();
   // const [scaleNotes, setScaleNotes] = useState<string[]>([])
   // console.log(scaleType)
+
+  //get current user
+  useEffect(() => {
+    async function loadCurrentUser() {
+      try {
+        if (!getAuthToken()) {
+          setCurrentUser(null);
+          return;
+        }
+
+        const data = await api.getMe();
+        setCurrentUser(data.user);
+      } catch {
+        removeAuthToken();
+        setCurrentUser(null);
+      }
+    }
+
+    loadCurrentUser();
+  }, []);
+
+  const handleLogout = () => {
+    removeAuthToken();
+    setCurrentUser(null);
+    setAuthMenuOpen(false);
+    setSavedItems([]);
+    setSelectedSaved(null);
+  };
+
+
   useEffect(() => {
     if (selectedRoot && selectedChordType) {
       
@@ -191,85 +234,110 @@ export default function Home() {
     }
   }
 
-const handleSelectSaved = (item: SavedItem) => {
-  setSelectedSaved(item);
+  const handleSelectSaved = (item: SavedItem) => {
+    setSelectedSaved(item);
 
-  if (item.savedType === "chord") {
-    const [root, chordType] = item.chord[0].split(" ");
-    console.log(item)
-    console.log(item.voicingIndex)
-    console.log(root, chordType)
-    setSelectedRoot(root);
-    setSelectedChordType(chordType);
-    setScaleType(null);
-    setVoicings([]);
-
-    
-
-    if (root && chordType) {
+    if (item.savedType === "chord") {
+      const [root, chordType] = item.chord[0].split(" ");
+      console.log(item)
+      console.log(item.voicingIndex)
       console.log(root, chordType)
-      const chordNotes = getChordNotes(root, chordType)
-      const v = getChordVoicings(chordNotes);
-      const savedIndex = item.voicingIndex ?? 0;
-      if (item.voicingIndex !== null){
-        setVoicings(v)
-        setVoicingIndex(savedIndex)
-        if (v.length > 0) setActiveNotes(new Set(v[savedIndex].positions))
-      }
+      setSelectedRoot(root);
+      setSelectedChordType(chordType);
+      setScaleType(null);
+      setVoicings([]);
+
       
-    }
 
-    return
-  }
-
-  if (item.savedType === "scale") {
-    const root = item.key || item.notes[0];
-    const scaleType = item.mode || null;
-
-    setSelectedRoot(root);
-    setScaleType(scaleType);
-    setSelectedChordType(null);
-    setVoicings([]);
-    
-    if (root && scaleType) {
-      const scaleNotes = getScaleNotes(root, scaleType)
-      setActiveNotes(new Set(getScalePosition(scaleNotes)))
-    }
-
-    return
-  }
-
-  if (item.savedType === "progression") {
-    console.log(item)
-    const key = item.key ?? "C";
-    const mode = item.mode === "Minor" ? "Minor" : "Major";
-    setProgressionKey(key);
-    setProgressionMode(mode);
-    setProgressionTemp(null);
-    setVoicings([]);
-
-    const diatonic = getDiatonicChords(key, mode)
-
-    const savedProgression = item.chord.map((label, idx) => {
-      const [root, ...type] = label.split(" ");
-      const chordType = type.join(" ") || "major";
-
-      const matched = diatonic.find((chord) => chord.root === root && chord.type === chordType)
-      console.log(matched)
-      return (
-        matched ?? {
-          root,
-          type: chordType,
-          fullName: `${root} ${chordType}`,
-          roman: "?",
-          degree: -1,
+      if (root && chordType) {
+        console.log(root, chordType)
+        const chordNotes = getChordNotes(root, chordType)
+        const v = getChordVoicings(chordNotes);
+        const savedIndex = item.voicingIndex ?? 0;
+        if (item.voicingIndex !== null){
+          setVoicings(v)
+          setVoicingIndex(savedIndex)
+          if (v.length > 0) setActiveNotes(new Set(v[savedIndex].positions))
         }
-      );
-    })
-    setDiatonicChords(diatonic);
-    setProgression(savedProgression);
+        
+      }
+
+      return
+    }
+
+    if (item.savedType === "scale") {
+      const root = item.key || item.notes[0];
+      const scaleType = item.mode || null;
+
+      setSelectedRoot(root);
+      setScaleType(scaleType);
+      setSelectedChordType(null);
+      setVoicings([]);
+      
+      if (root && scaleType) {
+        const scaleNotes = getScaleNotes(root, scaleType)
+        setActiveNotes(new Set(getScalePosition(scaleNotes)))
+      }
+
+      return
+    }
+
+    if (item.savedType === "progression") {
+      console.log(item)
+      const key = item.key ?? "C";
+      const mode = item.mode === "Minor" ? "Minor" : "Major";
+      setProgressionKey(key);
+      setProgressionMode(mode);
+      setProgressionTemp(null);
+      setVoicings([]);
+
+      const diatonic = getDiatonicChords(key, mode)
+
+      const savedProgression = item.chord.map((label, idx) => {
+        const [root, ...type] = label.split(" ");
+        const chordType = type.join(" ") || "major";
+
+        const matched = diatonic.find((chord) => chord.root === root && chord.type === chordType)
+        console.log(matched)
+        return (
+          matched ?? {
+            root,
+            type: chordType,
+            fullName: `${root} ${chordType}`,
+            roman: "?",
+            degree: -1,
+          }
+        );
+      })
+      setDiatonicChords(diatonic);
+      setProgression(savedProgression);
+    }
   }
-}
+
+  const handleDeleteSaved = async (
+    type: "chord" | "scale" | "progression",
+    item: SavedItem
+  ) => {
+    try {
+      setSaveError(null);
+
+      if (!getAuthToken()) {
+        setSaveError("You must be logged in to delete items.");
+        return;
+      }
+
+      await api.deleteSaved(type, item.id);
+
+      if (selectedSaved?.id === item.id) {
+        setSelectedSaved(null);
+      }
+
+      await loadSavedItems(type);
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      setSaveError("Failed to delete item.");
+    }
+  };
 
   // When a chord in the progression is clicked, show its scale on fretboard
   const handleProgressionChordClick = (chord: DiatonicChord, index: number, previewType: string) => {
@@ -293,6 +361,27 @@ const handleSelectSaved = (item: SavedItem) => {
     const scaleNotes = getScaleNotes(chord.root, scaleName)
     setActiveNotes(new Set(getScalePosition(scaleNotes)))
   }
+
+  const handleRenameSaved = async (
+    type: "chord" | "scale" | "progression",
+    item: SavedItem,
+    name: string
+  ) => {
+    try {
+      setSaveError(null);
+
+      if (!getAuthToken()) {
+        setSaveError("You must be logged in to rename items.");
+        return;
+      }
+
+      await api.updateSavedName(type, item.id, name);
+      await loadSavedItems(type);
+    } catch (error) {
+      console.error("Error renaming item:", error);
+      setSaveError("Failed to rename item.");
+    }
+  };
 
   const handlePlayProgressionChord = (root: string, type: string) => {
     setSelectedRoot(root);
@@ -344,7 +433,7 @@ const handleSelectSaved = (item: SavedItem) => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                {/* <Guitar className="w-6 h-6 text-primary" /> */}
+                <Guitar className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground">
@@ -354,6 +443,55 @@ const handleSelectSaved = (item: SavedItem) => {
                   Chord & Scale Analyzer
                 </p>
               </div>
+            </div>
+            <div className="relative">
+              {currentUser ? (
+                <>
+                  <button
+                    onClick={() => setAuthMenuOpen((open) => !open)}
+                    className="rounded border border-border px-3 py-2 text-sm font-bold hover:bg-muted cursor-pointer"
+                  >
+                    {currentUser.name || currentUser.username}
+                  </button>
+
+                  {authMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-40 rounded border border-border bg-card shadow-lg z-20">
+                      <button
+                        onClick={() => {
+                          setAuthMenuOpen(false);
+                          router.push("/profile");
+                        }}
+                        className="block w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                      >
+                        Profile
+                      </button>
+
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-muted"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => router.push("/login")}
+                    className="rounded border border-border px-3 py-2 text-sm font-bold hover:bg-muted"
+                  >
+                    Login
+                  </button>
+
+                  <button
+                    onClick={() => router.push("/signup")}
+                    className="rounded bg-primary px-3 py-2 text-sm font-bold text-background hover:opacity-90"
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -466,6 +604,8 @@ const handleSelectSaved = (item: SavedItem) => {
             items={savedItems}
             onSave={() => handleSaveItems(mode)}
             onSelect={handleSelectSaved}
+            onDelete={handleDeleteSaved}
+            onRename={handleRenameSaved}
             loading={saveLoading}
             error={saveError}
             selectedSaved={selectedSaved}

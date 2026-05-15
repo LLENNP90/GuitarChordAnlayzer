@@ -1,7 +1,7 @@
-import React, { Dispatch, SetStateAction } from 'react'
+import React, { Dispatch, SetStateAction, useState } from 'react'
 import { SavedItem } from '@/app/page';
 import { getDiatonicChords } from '../lib/progressionLogic';
-
+import { Trash2, Pencil, Check, X  } from 'lucide-react';
 
 
 interface SavedPanelProp{
@@ -10,6 +10,8 @@ interface SavedPanelProp{
     items: SavedItem[]
     onSave: () => void
     onSelect: (item: SavedItem) => void;
+    onDelete: (type: "chord" | "scale" | "progression", item: SavedItem) => void;
+    onRename: (type: "chord" | "scale" | "progression", item: SavedItem, newName: string) => void;
     loading?: boolean
     error?: string| null
     selectedSaved?: SavedItem | null
@@ -38,6 +40,8 @@ function getRomanProgression(item: SavedItem) {
     .join(" - ");
 }
 
+
+
 export default function SavedPanel({
   type,
   title,
@@ -46,8 +50,34 @@ export default function SavedPanel({
   onSelect,
   loading = false,
   error = null,
-  selectedSaved
+  selectedSaved,
+  onDelete,
+  onRename
 }: SavedPanelProp) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState("");
+
+  const startEditing = (item: SavedItem) => {
+    setEditingId(item.id);
+    setDraftName(item.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setDraftName("");
+  };
+
+  const saveEditing = async (item: SavedItem) => {
+    const nextName = draftName.trim();
+
+    if (!nextName) return;
+
+    await onRename(item.savedType, item, nextName);
+
+    setEditingId(null);
+    setDraftName("");
+  };
+
   return (
     <aside className="rounded-lg border border-border bg-card p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -75,12 +105,82 @@ export default function SavedPanel({
           </p>
         ) : (
           items.map((item) => (
-            <button
+            <div
               key={item.id}
               onClick={() => onSelect(item)}
               className="w-full rounded border border-border bg-muted p-3 text-left hover:border-primary"
             >
-              <p className="font-bold">{item.name}</p>
+            <div className="flex flex-row items-center gap-2">
+              {editingId === item.id ? (
+                <input
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      saveEditing(item);
+                    }
+
+                    if (e.key === "Escape") {
+                      cancelEditing();
+                    }
+                  }}
+                  className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-sm font-bold"
+                  autoFocus
+                />
+              ) : (
+                <p className="min-w-0 flex-1 font-bold">{item.name}</p>
+              )}
+
+              {editingId === item.id ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      saveEditing(item);
+                    }}
+                  >
+                    <Check size={16} className="text-green-600" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cancelEditing();
+                    }}
+                  >
+                    <X size={16} className="text-muted-foreground" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item.savedType, item);
+                    }}
+                  >
+                    <Trash2 size={16} className="text-red-500 hover:text-red-700" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditing(item);
+                    }}
+                  >
+                    <Pencil size={16} className="text-primary hover:text-primary-700" />
+                  </button>
+                </>
+              )}
+            </div>
+
+              
 
               {item.key && (
                 <p className="text-xs text-muted-foreground">
@@ -104,7 +204,7 @@ export default function SavedPanel({
                   Chords: {item.chord.join(" - ")}
                 </p>
               )}
-            </button>
+            </div>
           ))
         )}
       </div>

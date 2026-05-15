@@ -67,6 +67,17 @@ export const api = {
             method: "POST",
             body: JSON.stringify(input)
         })
+    },
+    deleteSaved(type: SavedType, id: string) {
+        return apiFetch(`api/saved/${type}/${id}`, {
+            method: "DELETE",
+        });
+    },
+    updateSavedName(type: SavedType, id: string, name: string) {
+        return apiFetch(`api/saved/${type}/${id}`,{
+            method:"PATCH",
+            body: JSON.stringify({ name })
+        })
     }
 }
 

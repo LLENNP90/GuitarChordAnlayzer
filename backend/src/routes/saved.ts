@@ -97,4 +97,55 @@ router.post(
     }
 )
 
+router.delete<SavedByIdParams>(
+  "/:type/:id", authMiddleware,
+  async (req,res,next) => {
+    try{
+      if (!req.user) throw ErrorResponses.UNAUTHORISED;
+
+      const {type,id} = req.params;
+
+      if (!isSavedType(type)) throw ErrorResponses.INVALID_FORMAT;
+
+      const saved = await SavedTheory.deleteSaved({
+        id,
+        userId: req.user.id,
+        savedType: type,
+      });
+      
+      Success(res, {saved})
+    } catch(err){
+      next(err)
+    }
+  }
+)
+
+router.patch<SavedByIdParams>(
+  "/:type/:id", authMiddleware,
+  async (req,res,next) => {
+    try{
+      if (!req.user) throw ErrorResponses.UNAUTHORISED;
+      
+      const {type,id} = req.params;
+      const { name } = req.body;
+
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        throw ErrorResponses.MISSING_FIELDS;
+      }
+      if (!isSavedType(type)) throw ErrorResponses.INVALID_FORMAT;
+
+      const saved = await SavedTheory.updateSavedName({
+        id,
+        userId: req.user.id,
+        savedType: type,
+        newSaveName: name.trim()
+      })
+
+      Success(res, {saved});
+    } catch (err) {
+      next(err)
+    }
+  }
+)
+
 export default router
