@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from 'react'
+import { useState } from 'react'
 import { setAuthToken } from '../../../lib/auth'
 import { api } from '../../../lib/api'
 import { useRouter } from 'next/navigation'
@@ -13,26 +13,39 @@ export default function page() {
     const [email, setEmail] = useState<string>('')
     const [name, setName] = useState<string>('')
     const router = useRouter()
-	const [showPassword, setShowPassword] = useState(false);
-	const [errorCode, setErrorCode] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [errorCode, setErrorCode] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
 
     async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault()
-        setIsLoading(true)
+      e.preventDefault();
+      setIsLoading(true);
+      setErrorCode(null);
 
-        try{
-            const data = await api.signup({ username, password, email, name })
-            setAuthToken(data.token)
-
-            router.push("/");
-
-        } catch (error) {
-                setErrorCode(error instanceof Error ? error.message : "API_ERROR");
-        }
+      try {
+        const data = await api.signup({ username, password, email, name });
+        setAuthToken(data.token);
+        router.push("/");
+      } catch (error) {
+        setErrorCode(error instanceof Error ? error.message : "API_ERROR");
+      } finally {
+        setIsLoading(false);
+      }
     }
 
+    const errorMessage =
+      errorCode === "USERNAME_TAKEN"
+        ? "That username is already taken."
+        : errorCode === "EMAIL_TAKEN"
+        ? "That email is already registered."
+        : errorCode === "MISSING_FIELDS"
+        ? "Please fill in all required fields."
+        : errorCode === "INVALID_EMAIL"
+        ? "Please enter a valid email address."
+        : errorCode
+        ? "Something went wrong. Please try again."
+        : null;
 
   return (
     <main className="min-h-screen flex">
@@ -132,6 +145,11 @@ export default function page() {
                 </>
               )}
             </button>
+            {errorMessage && (
+              <p className="rounded border border-red-500 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {errorMessage}
+              </p>
+            )}
           </form>
 
           <div className="mt-8">
