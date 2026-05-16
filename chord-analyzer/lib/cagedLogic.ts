@@ -118,15 +118,17 @@ function findFretsForNoteOnString(
   return frets;
 }
 
+//main logic 
 function buildCagedVoicingsForTemplate(
   root: string,
   template: CagedTemplate,
   maxFret = 15
 ): CagedVoicing[] {
+	//list of frets
   const possibleRootFrets = findFretsForNoteOnString(
-    template.rootAnchor.string,
-    root,
-    maxFret
+    template.rootAnchor.string, //5
+    root, // C
+    maxFret // 15
   );
 
   return possibleRootFrets
@@ -146,6 +148,7 @@ function buildCagedVoicingsForTemplate(
         positions,
       };
     })
+		// make it not go out of bounce
     .filter((voicing) =>
       voicing.positions.every(
         (position) => position.fret >= 0 && position.fret <= maxFret
@@ -161,6 +164,7 @@ export function getCagedVoicings(root: string, maxFret = 15): CagedVoicing[] {
     .sort((a, b) => a.baseFret - b.baseFret);
 }
 
+//helper function
 export function cagedVoicingToActiveNotes(voicing: CagedVoicing) {
   return new Set(
     voicing.positions.map((position) => {

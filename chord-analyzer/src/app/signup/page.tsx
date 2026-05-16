@@ -4,7 +4,8 @@ import { use, useState } from 'react'
 import { setAuthToken } from '../../../lib/auth'
 import { api } from '../../../lib/api'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Check, Eye, EyeOff, Link, Music } from 'lucide-react';
+import Link from 'next/dist/client/link'
+import { ArrowRight, Check, Eye, EyeOff, Music } from 'lucide-react';
 
 export default function page() {
     const [username, setUsername] = useState<string>('')

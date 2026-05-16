@@ -26,6 +26,7 @@ export const ErrorResponses = {
     // conflict (409)
     USERNAME_TAKEN: new AppError(409, 'USERNAME_TAKEN'),
     EMAIL_TAKEN: new AppError(409, 'EMAIL_TAKEN'),
+    SAVED_ALREADY_EXISTS: new AppError(409, "SAVED_ALREADY_EXISTS"),
 
     // not found (404)
     USER_NOT_FOUND: new AppError(404, 'USER_NOT_FOUND'),

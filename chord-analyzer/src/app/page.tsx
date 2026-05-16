@@ -235,7 +235,7 @@ export default function Home() {
         }
 
         await api.createSaved("chord", {
-          name: `${firstMatch.fullName} - ${new Date().toLocaleString()}`,
+          name: `${firstMatch.fullName} - ${voicings.length > 0 ? `Voicing ${voicingIndex + 1}` : "No Voicing"}`,
           key: selectedRoot || firstMatch.root,
           mode: selectedChordType || firstMatch.type,
           notes: uniqueNoteNames,
@@ -448,6 +448,7 @@ export default function Home() {
     setSelectedChordType(null)
     setActiveNotes(new Set())
     setVoicings([])
+    setVoicingIndex(0);
     setScaleType(null)
   }
 

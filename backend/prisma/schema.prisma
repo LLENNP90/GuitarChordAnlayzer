@@ -43,7 +43,11 @@ model Saved {
   notes         String[]
   chord         String[]   @default([])
   voicingIndex  Int?
+  fingerprint   String
+
   createdAt     DateTime    @default(now())
+
+  @@unique([userId, savedType, fingerprint])
 }
 
 

@@ -21,6 +21,15 @@ interface AddSaveInput{
     voicingIndex?: number | null
 }
 
+function isUniqueConstraintError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "P2002"
+  );
+}
+
 export class SavedTheory{
     static async getSavedTheory(input: SavedTheoryProp) {
         const saved = await prisma.saved.findFirst({
@@ -48,18 +57,33 @@ export class SavedTheory{
     }
 
     static async create(input: AddSaveInput){
-        return prisma.saved.create({
-            data: {
-                userId: input.userId,
-                name: input.name,
-                key: input.key,
-                mode: input.mode,
-                notes: input.notes ?? [],
-                chord: input.chord ?? [],
-                savedType: input.savedType,
-                voicingIndex: input.voicingIndex ?? null
-            },
-        })
+        const fingerprint = JSON.stringify({
+            key: input.key,
+            mode: input.mode,
+            notes: [...(input.notes ?? [])].sort(),
+            chord: input.chord ?? [],
+            voicingIndex: input.voicingIndex ?? null,
+        });
+        try{
+            return prisma.saved.create({
+                data: {
+                    userId: input.userId,
+                    name: input.name,
+                    key: input.key,
+                    mode: input.mode,
+                    notes: input.notes ?? [],
+                    chord: input.chord ?? [],
+                    savedType: input.savedType,
+                    voicingIndex: input.voicingIndex ?? null,
+                    fingerprint
+                },
+            })
+        } catch(err){
+            if (isUniqueConstraintError(err)) throw ErrorResponses.SAVED_ALREADY_EXISTS
+
+            throw err
+        }
+
     }
     static async deleteSaved(input:{
         id: string,
