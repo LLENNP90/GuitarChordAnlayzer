@@ -65,7 +65,7 @@ export class SavedTheory{
             voicingIndex: input.voicingIndex ?? null,
         });
         try{
-            return prisma.saved.create({
+            return await prisma.saved.create({
                 data: {
                     userId: input.userId,
                     name: input.name,

@@ -67,5 +67,10 @@ export const errorHandler = (
             code: err.code
         })
     }
+
+    return res.status(500).json({
+        success: false,
+        code: ErrorResponses.INTERNAL_ERROR.code
+    })
 }
 

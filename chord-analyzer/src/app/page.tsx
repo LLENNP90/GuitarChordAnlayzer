@@ -205,8 +205,14 @@ export default function Home() {
       const data = await api.getSaved(type)
       setSavedItems(data.saved);
     } catch (error) {
-      console.error("Error loading saved items:", error);
-      setSaveError("Failed to load saved items.");
+      if (error instanceof Error && error.message === "SAVED_ALREADY_EXISTS") {
+        setSaveError("This item is already saved.");
+      } else {
+        console.error("Error saving item:", error);
+        setSaveError("Failed to save item.");
+      } 
+    }  finally {
+      setSaveLoading(false);
     }
   } 
 
@@ -275,8 +281,12 @@ export default function Home() {
 
       await loadSavedItems(type);
     }  catch (error) {
-      console.error("Error saving item:", error);
-      setSaveError("Failed to save item.");
+      // console.error("Error saving item:", error);
+      if (error instanceof Error && error.message === "SAVED_ALREADY_EXISTS") {
+        setSaveError("This item is already saved.");
+      } else {
+        setSaveError("Failed to save item.");
+      }
     } finally {
       setSaveLoading(false)
     }
