@@ -51,6 +51,17 @@ export const api = {
         return apiFetch("api/auth/me");
     },
 
+    updateMe(input:{
+        username?: string,
+        email?: string,
+        name?: string
+    }){
+        return apiFetch("api/auth/me", {
+            method: "PATCH",
+            body: JSON.stringify(input)
+        })
+    },
+
     getSaved(type: SavedType){
         return apiFetch(`api/saved/${type}`);
     },

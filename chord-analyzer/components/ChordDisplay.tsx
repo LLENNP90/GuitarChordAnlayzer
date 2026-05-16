@@ -2,6 +2,7 @@
 
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { ChordMatch, NOTES, chordTemplate, Voicings } from '../lib/musicLogic';
+import type { CagedVoicing } from '../lib/cagedLogic';
 
 // TODO: CAGED LOGIC
 
@@ -19,6 +20,12 @@ interface ChordDisplayProp{
   goToVoicing: (idx: number) => void
   handleResetFilter: () => void
   onClickShifter: (direction: string) => void
+  currentCagedVoicing?: CagedVoicing
+  cagedIndex: number
+  cagedCount: number
+  showCurrentCagedShape: () => void
+  goToPreviousCagedShape: () => void
+  goToNextCagedShape: () => void
 }
 
 export default function ChordDisplay({
@@ -28,7 +35,13 @@ export default function ChordDisplay({
   selectedChordType, setSelectedChordType,
   voicings,setVoicings,
   voicingIndex, setVoicingIndex,
-  goToVoicing, handleResetFilter, onClickShifter
+  goToVoicing, handleResetFilter, onClickShifter,
+  currentCagedVoicing,
+  cagedIndex,
+  cagedCount,
+  showCurrentCagedShape,
+  goToPreviousCagedShape,
+  goToNextCagedShape
 }: ChordDisplayProp) {
   return ( 
     // idkif i should make it bg-card or bg-muted
@@ -77,6 +90,49 @@ export default function ChordDisplay({
           <button className='w-full border border-border hover:bg-primary hover:text-background transition-colors rounded px-4 py-2 font-bold' onClick={() => onClickShifter("down")}>← Shift Down</button>
           <button className='w-full border border-border hover:bg-primary hover:text-background transition-colors rounded px-4 py-2 font-bold' onClick={() => onClickShifter("up")}>Shift Up →</button>
         </div>
+      </div>
+
+      <div className='gap-2 font-body mb-6 p-3 bg-muted rounded-lg border border-border'>
+        <div className="flex justify-between items-center mb-2">
+          <h1 className='text-sm font-bold text-foreground uppercase tracking-wider'>CAGED Shapes</h1>
+        </div>
+        {currentCagedVoicing ? (
+          <>
+            <p className="text-xs text-muted-foreground mb-3">
+              {currentCagedVoicing.root} major using the {currentCagedVoicing.shape}-shape
+              {currentCagedVoicing.baseFret > 0 ? ` around fret ${currentCagedVoicing.baseFret}` : " in open position"}.
+            </p>
+            <div className='flex items-center justify-between gap-2 mb-2'>
+              <button
+                className='border border-border hover:bg-primary hover:text-background transition-colors rounded px-3 py-2 text-sm font-bold disabled:opacity-40'
+                onClick={goToPreviousCagedShape}
+                disabled={cagedCount === 0}
+              >
+                ← Prev
+              </button>
+              <button
+                className='border border-border hover:bg-primary hover:text-background transition-colors rounded px-3 py-2 text-sm font-bold'
+                onClick={showCurrentCagedShape}
+              >
+                Show {currentCagedVoicing.shape}-shape
+              </button>
+              <button
+                className='border border-border hover:bg-primary hover:text-background transition-colors rounded px-3 py-2 text-sm font-bold disabled:opacity-40'
+                onClick={goToNextCagedShape}
+                disabled={cagedCount === 0}
+              >
+                Next →
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Shape {cagedIndex + 1} of {cagedCount}
+            </p>
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Choose a root note to generate CAGED shapes.
+          </p>
+        )}
       </div>
 
       <div className='flex flex-row justify-between'>

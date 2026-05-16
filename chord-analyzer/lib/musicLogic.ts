@@ -4,7 +4,7 @@ import { note } from "tonal";
 export const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "Bb", "B"];
 export const STRINGS = ["E", "B", "G", "D", "A", "E"];
 
-const NOTE_TO_SEMITONE:Record<string, number> = Object.fromEntries(
+export const NOTE_TO_SEMITONE:Record<string, number> = Object.fromEntries(
   NOTES.map((note, i) => [note, i])
 ) //enumerate 
 

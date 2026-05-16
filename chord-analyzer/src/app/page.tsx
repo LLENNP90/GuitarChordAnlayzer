@@ -17,6 +17,7 @@ import { getAuthToken, removeAuthToken } from "../../lib/auth";
 import SavedPanel from "../../components/SavedPanel";
 import { Guitar } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getCagedVoicings, cagedVoicingToActiveNotes, CagedVoicing } from "../../lib/cagedLogic";
 
 // TODO: Make Grid for chord and scale section
 // TODO: Create Chord Identification Logic
@@ -64,6 +65,8 @@ export default function Home() {
 
   const [authMenuOpen, setAuthMenuOpen] = useState(false);
 
+  const [cagedVoicings, setCagedVoicings] = useState<CagedVoicing[]>([]);
+  const [cagedIndex, setCagedIndex] = useState(0);
 
   const router = useRouter();
   // const [scaleNotes, setScaleNotes] = useState<string[]>([])
@@ -97,6 +100,51 @@ export default function Home() {
     setSelectedSaved(null);
   };
 
+  useEffect(() => {
+    if (!selectedRoot || selectedChordType !== "major") {
+      setCagedVoicings([]);
+      setCagedIndex(0);
+      return;
+    }
+
+    const nextCagedVoicings = getCagedVoicings(selectedRoot);
+
+    setCagedVoicings(nextCagedVoicings);
+    setCagedIndex(0);
+  }, [selectedRoot, selectedChordType]);
+
+  const showCurrentCagedShape = () => {
+    const currentVoicing = cagedVoicings[cagedIndex];
+    if (!currentVoicing) return;
+
+    setActiveNotes(cagedVoicingToActiveNotes(currentVoicing));
+    setVoicings([]);
+  };
+
+  const goToNextCagedShape = () => {
+    if (cagedVoicings.length === 0) return;
+
+    const nextIndex = (cagedIndex + 1) % cagedVoicings.length;
+    const nextVoicing = cagedVoicings[nextIndex];
+
+    setCagedIndex(nextIndex);
+    setActiveNotes(cagedVoicingToActiveNotes(nextVoicing));
+    setVoicings([]);
+  }
+
+  const goToPreviousCagedShape = () => {
+    if (cagedVoicings.length === 0) return;
+
+    const nextIndex =
+      cagedIndex === 0 ? cagedVoicings.length - 1 : cagedIndex - 1;
+
+    const nextVoicing = cagedVoicings[nextIndex];
+
+    setCagedIndex(nextIndex);
+    setActiveNotes(cagedVoicingToActiveNotes(nextVoicing));
+    setVoicings([]);
+  };
+  const currentCagedVoicing = cagedVoicings[cagedIndex];
 
   useEffect(() => {
     if (selectedRoot && selectedChordType) {
@@ -532,21 +580,30 @@ export default function Home() {
         >
           <div>
             {mode === "chord" ? (
-              <ChordDisplay 
-                matches={matches}
-                uniqueNoteNames={uniqueNoteNames}
-                selectedRoot={selectedRoot}
-                setSelectedRoot={setSelectedRoot}
-                selectedChordType={selectedChordType}
-                setSelectedChordType={setSelectedChordType}
-                voicings={voicings}
-                setVoicings={setVoicings}
-                voicingIndex={voicingIndex}
-                setVoicingIndex={setVoicingIndex}
-                goToVoicing={getVoicings}
-                handleResetFilter={handleResetFilter}
-                onClickShifter={onClickShifter}
-              />
+              <>
+                <ChordDisplay 
+                  matches={matches}
+                  uniqueNoteNames={uniqueNoteNames}
+                  selectedRoot={selectedRoot}
+                  setSelectedRoot={setSelectedRoot}
+                  selectedChordType={selectedChordType}
+                  setSelectedChordType={setSelectedChordType}
+                  voicings={voicings}
+                  setVoicings={setVoicings}
+                  voicingIndex={voicingIndex}
+                  setVoicingIndex={setVoicingIndex}
+                  goToVoicing={getVoicings}
+                  handleResetFilter={handleResetFilter}
+                  onClickShifter={onClickShifter}
+                  currentCagedVoicing={currentCagedVoicing}
+                  cagedIndex={cagedIndex}
+                  cagedCount={cagedVoicings.length}
+                  showCurrentCagedShape={showCurrentCagedShape}
+                  goToPreviousCagedShape={goToPreviousCagedShape}
+                  goToNextCagedShape={goToNextCagedShape}
+                />
+              </>
+              
             ) : mode === "scale" ? (
               <ScaleDisplay 
                 scaleType={scaleType}

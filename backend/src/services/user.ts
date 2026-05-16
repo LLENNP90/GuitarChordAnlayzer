@@ -10,6 +10,12 @@ interface SignUpInput{
   name: string
 }
 
+interface EditInput{
+  username: string
+  email: string
+  name: string 
+}
+
 export class UserService {
   static async fetchAllUsers() {
     return prisma.user.findMany({
@@ -110,5 +116,38 @@ export class UserService {
         createdAt: user.createdAt,
       },
     };
+  }
+  static async editUser(id:string, input: EditInput){
+    const { username, email, name } = input;
+
+    if (username) { 
+      const existingUsername = await prisma.user.findUnique({
+        where: { username }
+      });
+      if (existingUsername && existingUsername.id !== id) throw ErrorResponses.USERNAME_TAKEN
+    }
+    if (email) { 
+      const existingEmail = await prisma.user.findUnique({
+        where: { email }
+      });
+      if (existingEmail && existingEmail.id !== id) throw ErrorResponses.EMAIL_TAKEN
+    }
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: {
+        username,
+        email,
+        name,
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        name: true,
+        createdAt: true,
+      },
+    });
+
+    return updatedUser;
   }
 }

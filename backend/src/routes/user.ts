@@ -81,4 +81,27 @@ router.post(
   }
 )
 
+router.patch(
+  "/me", authMiddleware,
+  async (req,res,next) => {
+    try{
+      if (!req.user) throw ErrorResponses.UNAUTHORISED;
+    
+      const {username, email, name} = req.body
+
+      if (!username && !email && !name) throw ErrorResponses.MISSING_FIELDS;
+
+      const updatedUser = await UserService.editUser(req.user.id, {
+        username,
+        email,
+        name
+      })
+
+      Success(res, {user: updatedUser})
+    } catch (err) {
+      next(err);
+    }
+  }
+)
+
 export default router;
